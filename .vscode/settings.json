@@ -1,0 +1,29 @@
+{
+    "C_Cpp.default.compilerPath": "C:\\msys64\\ucrt64\\bin\\gcc.exe",
+    "C_Cpp.errorSquiggles": "disabled",
+    "C_Cpp.default.intelliSenseMode": "windows-gcc-x64",
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/**"
+    ],
+    "files.associations": {
+        "iostream": "cpp",
+        "*.tcc": "cpp",
+        "cmath": "cpp",
+        "ctype.h": "c",
+        "stdio.h": "c",
+        "*.cs": "csharp",
+        "iosfwd": "cpp"
+    },
+    "editor.formatOnSave": true,
+    "[c]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+    "[cpp]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+    "[csharp]": {
+        "editor.defaultFormatter": "ms-dotnettools.csharp"
+    },
+    "dotnet.defaultSolution": "${workspaceFolder}/MyApp.sln",
+    "csharp.suppressDotnetRestoreNotification": true
+}

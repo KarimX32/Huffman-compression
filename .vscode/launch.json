@@ -1,0 +1,43 @@
+{
+    "version": "2.0.0",
+    "configurations": [
+        {
+            "name": "C/C++: Debug active file",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${fileDirname}/${fileBasenameNoExtension}.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "C:/msys64/ucrt64/bin/gdb.exe",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build C/C++"
+        },
+        {
+            "name": ".NET: Debug C# Project",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "Build C# Project",
+            "program": "C:/Users/Moamen Eslam/Documents/C language/MyApp/bin/Debug/net8.0/MyApp.dll",
+            "args": [],
+            "cwd": "C:/Users/Moamen Eslam/Documents/C language/MyApp",
+            "console": "integratedTerminal",
+            "stopAtEntry": false,
+            "internalConsoleOptions": "neverOpen"
+        }
+    ]
+}
