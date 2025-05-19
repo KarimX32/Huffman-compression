@@ -325,14 +325,11 @@ struct FileCompressor
         ifstream file(fileName);
         if (file.is_open() == false)
         {
-            cout << "Error: Could not open file " << fileName << endl;
             return NULL;
         }
 
         FrequencyTable *table = new FrequencyTable();
         char *buffer = new char[bufferSize];
-
-        cout << "Reading file" << endl;
 
         while (file.eof() == false)
         {
@@ -356,19 +353,15 @@ struct FileCompressor
         ifstream inputFile(inputFileName);
         if (inputFile.is_open() == false)
         {
-            cout << "Error: Could not open file " << inputFileName << endl;
             return false;
         }
 
         ofstream outputFile(outputFileName);
         if (outputFile.is_open() == false)
         {
-            cout << "Error: Could not create file " << outputFileName << endl;
             inputFile.close();
             return false;
         }
-
-        cout << "Compressing file" << endl;
 
         outputFile << "ECE2103HUFFMAN" << endl;
         tree->SaveToFile(outputFile, inputFileName);
@@ -429,10 +422,8 @@ struct FileCompressor
         if (table == NULL)
             return false;
 
-        cout << "Building compression tree" << endl;
         HuffmanTree *tree = new HuffmanTree(table);
 
-        cout << "Creating compression codes" << endl;
         CodeBook *codes = tree->CreateCodeBook();
 
         bool success = CompressFile(inputFileName, outputFileName, tree, codes);
@@ -444,7 +435,6 @@ struct FileCompressor
         ifstream inputFile(inputFileName);
         if (inputFile.is_open() == false)
         {
-            cout << "Error: Could not open compressed file " << inputFileName << endl;
             return false;
         }
 
@@ -456,7 +446,6 @@ struct FileCompressor
 
             if (strcmp(header, "ECE2103HUFFMAN") != 0)
             {
-                cout << "Error: This is not a valid compressed file" << endl;
                 inputFile.close();
                 return false;
             }
@@ -476,32 +465,26 @@ struct FileCompressor
         ofstream outputFile(actualOutputFileName);
         if (outputFile.is_open() == false)
         {
-            cout << "Error: Could not create output file " << actualOutputFileName << endl;
             inputFile.close();
             return false;
         }
-
-        cout << "Decompressing file" << endl;
 
         string header;
         getline(inputFile, header);
         if (header != "ECE2103HUFFMAN")
         {
-            cout << "Error: File format is invalid" << endl;
             return false;
         }
 
         HuffmanTree *tree = new HuffmanTree();
         if (tree->LoadFromFile(inputFile) == false)
         {
-            cout << "Error: Could not read compression data" << endl;
             return false;
         }
 
         if (outputFileName.empty())
         {
             string originalFileName = tree->GetOriginalFileName();
-            cout << "Restoring to original filename: " << originalFileName << endl;
         }
 
         TreeNode *currentNode = tree->GetRoot();
@@ -596,7 +579,7 @@ int main(int argc, char *argv[])
             }
             else
             {
-                cout << "Error: Please specify a file to compress" << endl;
+                cout << "No file specified" << endl;
                 return 1;
             }
         }
@@ -615,7 +598,7 @@ int main(int argc, char *argv[])
             }
             else
             {
-                cout << "Error: Please specify a file to decompress" << endl;
+                cout << "No file specified" << endl;
                 return 1;
             }
         }
@@ -626,7 +609,6 @@ int main(int argc, char *argv[])
         }
         else
         {
-            cout << "Error: Unknown option " << option << endl;
             return 1;
         }
     }
@@ -637,27 +619,15 @@ int main(int argc, char *argv[])
 
     if (wantToCompress)
     {
-        cout << "Compressing " << inputFileName;
-        if (outputFileName.empty() == false)
-            cout << " to " << outputFileName;
-        else
-            cout << " to " << inputFileName << ".ece2103";
-        cout << endl;
-
         success = compressor.Compress(inputFileName, outputFileName);
     }
     else if (wantToDecompress)
     {
-        cout << "Decompressing " << inputFileName;
-        if (outputFileName.empty() == false)
-            cout << " to " << outputFileName;
-        cout << endl;
-
         success = compressor.Decompress(inputFileName, outputFileName);
     }
     else
     {
-        cout << "Error: Please specify either -c to compress or -d to decompress" << endl;
+        cout << "Use -c or -d" << endl;
         return 1;
     }
 
