@@ -1,12 +1,12 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-int BUFFER_SIZE = 4096;
+int BufferSize = 4096;
 
 struct Node
 {
     unsigned char byte;
-    long long freq;
+    long long frequency;
     Node *left;
     Node *right;
     Node *next;
@@ -14,7 +14,7 @@ struct Node
     Node(unsigned char b = 0, long long f = 0)
     {
         byte = b;
-        freq = f;
+        frequency = f;
         left = right = next = nullptr;
     }
 };
@@ -25,63 +25,63 @@ struct FreqList
 
     FreqList() { head = nullptr; }
 
-    void insert(Node *node)
+    void Insert(Node *node)
     {
-        if (!head || node->freq < head->freq)
+        if (!head || node->frequency < head->frequency)
         {
             node->next = head;
             head = node;
             return;
         }
 
-        Node *curr = head;
-        while (curr->next && curr->next->freq <= node->freq)
+        Node *current = head;
+        while (current->next && current->next->frequency <= node->frequency)
         {
-            curr = curr->next;
+            current = current->next;
         }
-        node->next = curr->next;
-        curr->next = node;
+        node->next = current->next;
+        current->next = node;
     }
 
-    Node *removeMin()
+    Node *RemoveMin()
     {
         if (!head)
             return nullptr;
-        Node *min_node = head;
+        Node *minNode = head;
         head = head->next;
-        min_node->next = nullptr;
-        return min_node;
+        minNode->next = nullptr;
+        return minNode;
     }
 
-    bool hasMoreThanOne()
+    bool HasMoreThanOne()
     {
         return head && head->next;
     }
 };
 
-long long frequency[256];
-string huffmanCodes[256];
-Node *huffmanRoot = nullptr;
+long long CharFrequency[256];
+string HuffmanCodes[256];
+Node *TreeRoot = nullptr;
 
-long long getFileSize(const char *filename);
-void showProgress(long long processed, long long total, time_t startTime);
+long long GetFileSize(const char *filename);
+void ShowProgress(long long processed, long long total, time_t startTime);
 
-bool countFrequencies(const char *filename)
+bool CountFrequencies(const char *filename)
 {
     FILE *file = fopen(filename, "rb");
     if (!file)
         return false;
     for (int i = 0; i < 256; i++)
     {
-        frequency[i] = 0;
+        CharFrequency[i] = 0;
     }
-    unsigned char *buffer = new unsigned char[BUFFER_SIZE];
-    int bytesRead;
-    while ((bytesRead = fread(buffer, 1, BUFFER_SIZE, file)) > 0)
+    unsigned char *buffer = new unsigned char[BufferSize];
+    int BytesRead;
+    while ((BytesRead = fread(buffer, 1, BufferSize, file)) > 0)
     {
-        for (int i = 0; i < bytesRead; i++)
+        for (int i = 0; i < BytesRead; i++)
         {
-            frequency[buffer[i]]++;
+            CharFrequency[buffer[i]]++;
         }
     }
     delete[] buffer;
@@ -89,63 +89,63 @@ bool countFrequencies(const char *filename)
     return true;
 }
 
-Node *buildHuffmanTree()
+Node *BuildHuffmanTree()
 {
-    FreqList freqList;
+    FreqList SortedList;
     for (int i = 0; i < 256; i++)
     {
-        if (frequency[i] > 0)
+        if (CharFrequency[i] > 0)
         {
-            freqList.insert(new Node(i, frequency[i]));
+            SortedList.Insert(new Node(i, CharFrequency[i]));
         }
     }
-    if (!freqList.head)
+    if (!SortedList.head)
         return nullptr;
-    if (!freqList.head->next)
+    if (!SortedList.head->next)
     {
-        Node *root = new Node(0, freqList.head->freq);
-        root->left = freqList.head;
+        Node *root = new Node(0, SortedList.head->frequency);
+        root->left = SortedList.head;
         return root;
     }
-    while (freqList.hasMoreThanOne())
+    while (SortedList.HasMoreThanOne())
     {
-        Node *left = freqList.removeMin();
-        Node *right = freqList.removeMin();
-        Node *parent = new Node(0, left->freq + right->freq);
-        parent->left = left;
-        parent->right = right;
-        freqList.insert(parent);
+        Node *LeftNode = SortedList.RemoveMin();
+        Node *RightNode = SortedList.RemoveMin();
+        Node *ParentNode = new Node(0, LeftNode->frequency + RightNode->frequency);
+        ParentNode->left = LeftNode;
+        ParentNode->right = RightNode;
+        SortedList.Insert(ParentNode);
     }
-    return freqList.removeMin();
+    return SortedList.RemoveMin();
 }
 
-void generateCodes(Node *node, string code)
+void GenerateCodes(Node *node, string code)
 {
     if (!node)
         return;
     if (!node->left && !node->right)
     {
-        huffmanCodes[node->byte] = code.empty() ? "0" : code;
+        HuffmanCodes[node->byte] = code.empty() ? "0" : code;
         return;
     }
-    generateCodes(node->left, code + "0");
-    generateCodes(node->right, code + "1");
+    GenerateCodes(node->left, code + "0");
+    GenerateCodes(node->right, code + "1");
 }
 
-bool compressFile(const char *inputFile, const char *outputFile)
+bool CompressFile(const char *InputFile, const char *OutputFile)
 {
-    if (!countFrequencies(inputFile))
+    if (!CountFrequencies(InputFile))
         return false;
-    huffmanRoot = buildHuffmanTree();
-    if (!huffmanRoot)
+    TreeRoot = BuildHuffmanTree();
+    if (!TreeRoot)
         return false;
     for (int i = 0; i < 256; i++)
     {
-        huffmanCodes[i] = "";
+        HuffmanCodes[i] = "";
     }
-    generateCodes(huffmanRoot, "");
-    FILE *input = fopen(inputFile, "rb");
-    FILE *output = fopen(outputFile, "wb");
+    GenerateCodes(TreeRoot, "");
+    FILE *input = fopen(InputFile, "rb");
+    FILE *output = fopen(OutputFile, "wb");
     if (!input || !output)
     {
         if (input)
@@ -156,57 +156,57 @@ bool compressFile(const char *inputFile, const char *outputFile)
     }
     for (int i = 0; i < 256; i++)
     {
-        fwrite(&frequency[i], sizeof(long long), 1, output);
+        fwrite(&CharFrequency[i], sizeof(long long), 1, output);
     }
     for (int i = 0; i < 256; i++)
     {
-        int codeLength = huffmanCodes[i].length();
-        fwrite(&codeLength, sizeof(int), 1, output);
-        if (codeLength > 0)
+        int CodeLength = HuffmanCodes[i].length();
+        fwrite(&CodeLength, sizeof(int), 1, output);
+        if (CodeLength > 0)
         {
-            fwrite(huffmanCodes[i].c_str(), sizeof(char), codeLength, output);
+            fwrite(HuffmanCodes[i].c_str(), sizeof(char), CodeLength, output);
         }
     }
-    long long fileSize = getFileSize(inputFile);
+    long long FileSize = GetFileSize(InputFile);
     long long processed = 0;
-    time_t startTime = time(nullptr);
-    unsigned char *buffer = new unsigned char[BUFFER_SIZE];
-    string bitBuffer = "";
-    int bytesRead;
-    while ((bytesRead = fread(buffer, 1, BUFFER_SIZE, input)) > 0)
+    time_t StartTime = time(nullptr);
+    unsigned char *buffer = new unsigned char[BufferSize];
+    string BitBuffer = "";
+    int BytesRead;
+    while ((BytesRead = fread(buffer, 1, BufferSize, input)) > 0)
     {
-        for (int i = 0; i < bytesRead; i++)
+        for (int i = 0; i < BytesRead; i++)
         {
-            bitBuffer += huffmanCodes[buffer[i]];
+            BitBuffer += HuffmanCodes[buffer[i]];
 
-            while (bitBuffer.length() >= 8)
+            while (BitBuffer.length() >= 8)
             {
-                unsigned char outputByte = 0;
+                unsigned char OutputByte = 0;
                 for (int j = 0; j < 8; j++)
                 {
-                    if (bitBuffer[j] == '1')
+                    if (BitBuffer[j] == '1')
                     {
-                        outputByte = outputByte + (1 << (7 - j));
+                        OutputByte = OutputByte + (1 << (7 - j));
                     }
                 }
-                fwrite(&outputByte, 1, 1, output);
-                bitBuffer = bitBuffer.substr(8);
+                fwrite(&OutputByte, 1, 1, output);
+                BitBuffer = BitBuffer.substr(8);
             }
         }
-        processed += bytesRead;
-        showProgress(processed, fileSize, startTime);
+        processed += BytesRead;
+        ShowProgress(processed, FileSize, StartTime);
     }
-    if (!bitBuffer.empty())
+    if (!BitBuffer.empty())
     {
-        unsigned char outputByte = 0;
-        for (int j = 0; j < bitBuffer.length(); j++)
+        unsigned char OutputByte = 0;
+        for (int j = 0; j < BitBuffer.length(); j++)
         {
-            if (bitBuffer[j] == '1')
+            if (BitBuffer[j] == '1')
             {
-                outputByte = outputByte + (1 << (7 - j));
+                OutputByte = OutputByte + (1 << (7 - j));
             }
         }
-        fwrite(&outputByte, 1, 1, output);
+        fwrite(&OutputByte, 1, 1, output);
     }
     delete[] buffer;
     fclose(input);
@@ -215,10 +215,10 @@ bool compressFile(const char *inputFile, const char *outputFile)
     return true;
 }
 
-bool decompressFile(const char *inputFile, const char *outputFile)
+bool DecompressFile(const char *InputFile, const char *OutputFile)
 {
-    FILE *input = fopen(inputFile, "rb");
-    FILE *output = fopen(outputFile, "wb");
+    FILE *input = fopen(InputFile, "rb");
+    FILE *output = fopen(OutputFile, "wb");
     if (!input || !output)
     {
         if (input)
@@ -229,7 +229,7 @@ bool decompressFile(const char *inputFile, const char *outputFile)
     }
     for (int i = 0; i < 256; i++)
     {
-        if (fread(&frequency[i], sizeof(long long), 1, input) != 1)
+        if (fread(&CharFrequency[i], sizeof(long long), 1, input) != 1)
         {
             fclose(input);
             fclose(output);
@@ -238,65 +238,65 @@ bool decompressFile(const char *inputFile, const char *outputFile)
     }
     for (int i = 0; i < 256; i++)
     {
-        int codeLength;
-        if (fread(&codeLength, sizeof(int), 1, input) != 1)
+        int CodeLength;
+        if (fread(&CodeLength, sizeof(int), 1, input) != 1)
         {
             fclose(input);
             fclose(output);
             return false;
         }
-        if (codeLength > 0)
+        if (CodeLength > 0)
         {
-            char *codeStr = new char[codeLength + 1];
-            if (fread(codeStr, sizeof(char), codeLength, input) != codeLength)
+            char *CodeString = new char[CodeLength + 1];
+            if (fread(CodeString, sizeof(char), CodeLength, input) != CodeLength)
             {
-                delete[] codeStr;
+                delete[] CodeString;
                 fclose(input);
                 fclose(output);
                 return false;
             }
-            codeStr[codeLength] = '\0';
-            huffmanCodes[i] = string(codeStr);
-            delete[] codeStr;
+            CodeString[CodeLength] = '\0';
+            HuffmanCodes[i] = string(CodeString);
+            delete[] CodeString;
         }
         else
         {
-            huffmanCodes[i] = "";
+            HuffmanCodes[i] = "";
         }
     }
-    huffmanRoot = buildHuffmanTree();
-    if (!huffmanRoot)
+    TreeRoot = BuildHuffmanTree();
+    if (!TreeRoot)
     {
         fclose(input);
         fclose(output);
         return true;
     }
-    long long totalBytes = 0;
+    long long TotalBytes = 0;
     for (int i = 0; i < 256; i++)
     {
-        totalBytes += frequency[i];
+        TotalBytes += CharFrequency[i];
     }
-    if (totalBytes == 0)
+    if (TotalBytes == 0)
     {
         fclose(input);
         fclose(output);
         return true;
     }
-    long long fileSize = getFileSize(inputFile);
+    long long FileSize = GetFileSize(InputFile);
     long long processed = 0;
-    time_t startTime = time(nullptr);
-    unsigned char *buffer = new unsigned char[BUFFER_SIZE];
-    Node *current = huffmanRoot;
-    long long bytesWritten = 0;
-    int bytesRead;
-    while (bytesWritten < totalBytes && (bytesRead = fread(buffer, 1, BUFFER_SIZE, input)) > 0)
+    time_t StartTime = time(nullptr);
+    unsigned char *buffer = new unsigned char[BufferSize];
+    Node *current = TreeRoot;
+    long long BytesWritten = 0;
+    int BytesRead;
+    while (BytesWritten < TotalBytes && (BytesRead = fread(buffer, 1, BufferSize, input)) > 0)
     {
-        for (int i = 0; i < bytesRead && bytesWritten < totalBytes; i++)
+        for (int i = 0; i < BytesRead && BytesWritten < TotalBytes; i++)
         {
-            unsigned char inputByte = buffer[i];
-            for (int bit = 7; bit >= 0 && bytesWritten < totalBytes; bit--)
+            unsigned char InputByte = buffer[i];
+            for (int bit = 7; bit >= 0 && BytesWritten < TotalBytes; bit--)
             {
-                if (inputByte & (1 << bit))
+                if (InputByte & (1 << bit))
                 {
                     current = current->right;
                 }
@@ -308,13 +308,13 @@ bool decompressFile(const char *inputFile, const char *outputFile)
                 if (current->left == nullptr && current->right == nullptr)
                 {
                     fwrite(&current->byte, 1, 1, output);
-                    bytesWritten++;
-                    current = huffmanRoot;
+                    BytesWritten++;
+                    current = TreeRoot;
                 }
             }
         }
-        processed += bytesRead;
-        showProgress(processed, fileSize, startTime);
+        processed += BytesRead;
+        ShowProgress(processed, FileSize, StartTime);
     }
     delete[] buffer;
     fclose(input);
@@ -323,12 +323,12 @@ bool decompressFile(const char *inputFile, const char *outputFile)
     return true;
 }
 
-void showError()
+void ShowError()
 {
     cout << "Sorry, this operation did not work." << endl;
 }
 
-void showHelp()
+void ShowHelp()
 {
     cout << "How to use this program:" << endl;
     cout << "  app.exe -c input.txt      Compress a file" << endl;
@@ -338,9 +338,9 @@ void showHelp()
     cout << "  app.exe -b 16384 -c photo.png              Compress with 16KB buffer" << endl;
 }
 
-string getDecompressedFilename(const char *compressedFile)
+string GetDecompressedFilename(const char *CompressedFile)
 {
-    string filename = string(compressedFile);
+    string filename = string(CompressedFile);
     if (filename.length() > 8 && filename.substr(filename.length() - 8) == ".ece2103")
     {
         return filename.substr(0, filename.length() - 8);
@@ -348,30 +348,30 @@ string getDecompressedFilename(const char *compressedFile)
     return filename + ".decompressed";
 }
 
-long long getFileSize(const char *filename)
+long long GetFileSize(const char *filename)
 {
     FILE *file = fopen(filename, "rb");
     if (!file)
         return 0;
 
     unsigned char buffer[1024];
-    long long totalSize = 0;
-    int bytesRead;
+    long long TotalSize = 0;
+    int BytesRead;
 
-    while ((bytesRead = fread(buffer, 1, 1024, file)) > 0)
+    while ((BytesRead = fread(buffer, 1, 1024, file)) > 0)
     {
-        totalSize += bytesRead;
+        TotalSize += BytesRead;
     }
 
     fclose(file);
-    return totalSize;
+    return TotalSize;
 }
 
-void showProgress(long long processed, long long total, time_t startTime)
+void ShowProgress(long long processed, long long total, time_t StartTime)
 {
     int percent = (processed * 100) / total;
-    time_t currentTime = time(nullptr);
-    double elapsed = difftime(currentTime, startTime);
+    time_t CurrentTime = time(nullptr);
+    double elapsed = difftime(CurrentTime, StartTime);
 
     if (elapsed > 0 && processed > 0)
     {
@@ -393,11 +393,11 @@ int main(int argc, char *argv[])
 {
     if (argc < 2)
     {
-        showHelp();
+        ShowHelp();
         return 0;
     }
     bool compress = false, decompress = false;
-    string inputFile = "";
+    string InputFile = "";
     for (int i = 1; i < argc; i++)
     {
         string arg = argv[i];
@@ -406,7 +406,7 @@ int main(int argc, char *argv[])
             compress = true;
             if (i + 1 < argc)
             {
-                inputFile = argv[++i];
+                InputFile = argv[++i];
             }
         }
         else if (arg == "-d")
@@ -414,40 +414,40 @@ int main(int argc, char *argv[])
             decompress = true;
             if (i + 1 < argc)
             {
-                inputFile = argv[++i];
+                InputFile = argv[++i];
             }
         }
         else if (arg == "-b")
         {
             if (i + 1 < argc)
             {
-                BUFFER_SIZE = atoi(argv[++i]);
-                if (BUFFER_SIZE <= 0)
-                    BUFFER_SIZE = 4096;
+                BufferSize = atoi(argv[++i]);
+                if (BufferSize <= 0)
+                    BufferSize = 4096;
             }
         }
     }
-    if (compress && !inputFile.empty())
+    if (compress && !InputFile.empty())
     {
-        string outputFile = inputFile + ".ece2103";
-        if (!compressFile(inputFile.c_str(), outputFile.c_str()))
+        string OutputFile = InputFile + ".ece2103";
+        if (!CompressFile(InputFile.c_str(), OutputFile.c_str()))
         {
-            showError();
+            ShowError();
             return 1;
         }
     }
-    else if (decompress && !inputFile.empty())
+    else if (decompress && !InputFile.empty())
     {
-        string outputFile = getDecompressedFilename(inputFile.c_str());
-        if (!decompressFile(inputFile.c_str(), outputFile.c_str()))
+        string OutputFile = GetDecompressedFilename(InputFile.c_str());
+        if (!DecompressFile(InputFile.c_str(), OutputFile.c_str()))
         {
-            showError();
+            ShowError();
             return 1;
         }
     }
     else
     {
-        showHelp();
+        ShowHelp();
     }
     return 0;
 }
