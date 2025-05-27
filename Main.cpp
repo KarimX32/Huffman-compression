@@ -31,16 +31,15 @@ struct FreqList
         {
             node->next = head;
             head = node;
-            return;
         }
-
-        Node *current = head;
-        while (current->next && current->next->frequency <= node->frequency)
+        else
         {
-            current = current->next;
+            Node *current = head;
+            while (current->next != nullptr && current->next->frequency <= node->frequency)
+                current = current->next;
+            node->next = current->next;
+            current->next = node;
         }
-        node->next = current->next;
-        current->next = node;
     }
 
     Node *RemoveMin()
@@ -71,9 +70,9 @@ bool CountFrequencies(const char *filename)
     FILE *file = fopen(filename, "rb");
     if (!file)
         return false;
-    for (int i = 0; i < 256; i++)
+    for (int charIndex = 0; charIndex < 256; charIndex++)
     {
-        CharFrequency[i] = 0;
+        CharFrequency[charIndex] = 0;
     }
     unsigned char *buffer = new unsigned char[BufferSize];
     int BytesRead;
@@ -92,11 +91,11 @@ bool CountFrequencies(const char *filename)
 Node *BuildHuffmanTree()
 {
     FreqList SortedList;
-    for (int i = 0; i < 256; i++)
+    for (int charIndex = 0; charIndex < 256; charIndex++)
     {
-        if (CharFrequency[i] > 0)
+        if (CharFrequency[charIndex] > 0)
         {
-            SortedList.Insert(new Node(i, CharFrequency[i]));
+            SortedList.Insert(new Node(charIndex, CharFrequency[charIndex]));
         }
     }
     if (!SortedList.head)
@@ -119,17 +118,28 @@ Node *BuildHuffmanTree()
     return SortedList.RemoveMin();
 }
 
-void GenerateCodes(Node *node, string code)
+void GenerateCodes(Node *root, string baseCode)
 {
-    if (!node)
+    if (!root)
         return;
-    if (!node->left && !node->right)
+
+    if (root->left == nullptr && root->right == nullptr)
     {
-        HuffmanCodes[node->byte] = code.empty() ? "0" : code;
+        if (baseCode.empty())
+        {
+            HuffmanCodes[root->byte] = "0";
+        }
+        else
+        {
+            HuffmanCodes[root->byte] = baseCode;
+        }
         return;
     }
-    GenerateCodes(node->left, code + "0");
-    GenerateCodes(node->right, code + "1");
+
+    if (root->left)
+        GenerateCodes(root->left, baseCode + "0");
+    if (root->right)
+        GenerateCodes(root->right, baseCode + "1");
 }
 
 bool CompressFile(const char *InputFile, const char *OutputFile)
@@ -139,9 +149,9 @@ bool CompressFile(const char *InputFile, const char *OutputFile)
     TreeRoot = BuildHuffmanTree();
     if (!TreeRoot)
         return false;
-    for (int i = 0; i < 256; i++)
+    for (int charIndex = 0; charIndex < 256; charIndex++)
     {
-        HuffmanCodes[i] = "";
+        HuffmanCodes[charIndex] = "";
     }
     GenerateCodes(TreeRoot, "");
     FILE *input = fopen(InputFile, "rb");
@@ -154,19 +164,19 @@ bool CompressFile(const char *InputFile, const char *OutputFile)
             fclose(output);
         return false;
     }
-    for (int i = 0; i < 256; i++)
+
+    /*////////////// Got Help From AI Within The Next Section \\\\\\\\\\\\\\*/
+    fwrite(CharFrequency, sizeof(long long), 256, output);
+
+    for (int charIndex = 0; charIndex < 256; charIndex++)
     {
-        fwrite(&CharFrequency[i], sizeof(long long), 1, output);
+        int len = HuffmanCodes[charIndex].length();
+        fwrite(&len, sizeof(int), 1, output);
+        if (len > 0)
+            fwrite(HuffmanCodes[charIndex].c_str(), 1, len, output);
     }
-    for (int i = 0; i < 256; i++)
-    {
-        int CodeLength = HuffmanCodes[i].length();
-        fwrite(&CodeLength, sizeof(int), 1, output);
-        if (CodeLength > 0)
-        {
-            fwrite(HuffmanCodes[i].c_str(), sizeof(char), CodeLength, output);
-        }
-    }
+    /*////////////// End of Assistance \\\\\\\\\\\\\\*/
+
     long long FileSize = GetFileSize(InputFile);
     long long processed = 0;
     time_t StartTime = time(nullptr);
@@ -175,38 +185,37 @@ bool CompressFile(const char *InputFile, const char *OutputFile)
     int BytesRead;
     while ((BytesRead = fread(buffer, 1, BufferSize, input)) > 0)
     {
+
         for (int i = 0; i < BytesRead; i++)
         {
             BitBuffer += HuffmanCodes[buffer[i]];
 
+            /*////////////// Got Help From AI Within The Next Section \\\\\\\\\\\\\\*/
             while (BitBuffer.length() >= 8)
             {
-                unsigned char OutputByte = 0;
+                unsigned char byte = 0;
                 for (int j = 0; j < 8; j++)
                 {
                     if (BitBuffer[j] == '1')
-                    {
-                        OutputByte = OutputByte + (1 << (7 - j));
-                    }
+                        byte += (128 >> j);
                 }
-                fwrite(&OutputByte, 1, 1, output);
+                fwrite(&byte, 1, 1, output);
                 BitBuffer = BitBuffer.substr(8);
             }
+            /*////////////// End of Assistance \\\\\\\\\\\\\\*/
         }
         processed += BytesRead;
         ShowProgress(processed, FileSize, StartTime);
     }
     if (!BitBuffer.empty())
     {
-        unsigned char OutputByte = 0;
+        unsigned char byte = 0;
         for (int j = 0; j < BitBuffer.length(); j++)
         {
             if (BitBuffer[j] == '1')
-            {
-                OutputByte = OutputByte + (1 << (7 - j));
-            }
+                byte += (128 >> j);
         }
-        fwrite(&OutputByte, 1, 1, output);
+        fwrite(&byte, 1, 1, output);
     }
     delete[] buffer;
     fclose(input);
@@ -227,16 +236,16 @@ bool DecompressFile(const char *InputFile, const char *OutputFile)
             fclose(output);
         return false;
     }
-    for (int i = 0; i < 256; i++)
+    for (int charIndex = 0; charIndex < 256; charIndex++)
     {
-        if (fread(&CharFrequency[i], sizeof(long long), 1, input) != 1)
+        if (fread(&CharFrequency[charIndex], sizeof(long long), 1, input) != 1)
         {
             fclose(input);
             fclose(output);
             return false;
         }
     }
-    for (int i = 0; i < 256; i++)
+    for (int charIndex = 0; charIndex < 256; charIndex++)
     {
         int CodeLength;
         if (fread(&CodeLength, sizeof(int), 1, input) != 1)
@@ -247,21 +256,25 @@ bool DecompressFile(const char *InputFile, const char *OutputFile)
         }
         if (CodeLength > 0)
         {
-            char *CodeString = new char[CodeLength + 1];
-            if (fread(CodeString, sizeof(char), CodeLength, input) != CodeLength)
+            char CodeString[256];
+            if (CodeLength >= 256)
             {
-                delete[] CodeString;
+                fclose(input);
+                fclose(output);
+                return false;
+            }
+            if (fread(CodeString, 1, CodeLength, input) != CodeLength)
+            {
                 fclose(input);
                 fclose(output);
                 return false;
             }
             CodeString[CodeLength] = '\0';
-            HuffmanCodes[i] = string(CodeString);
-            delete[] CodeString;
+            HuffmanCodes[charIndex] = CodeString;
         }
         else
         {
-            HuffmanCodes[i] = "";
+            HuffmanCodes[charIndex] = "";
         }
     }
     TreeRoot = BuildHuffmanTree();
@@ -272,9 +285,9 @@ bool DecompressFile(const char *InputFile, const char *OutputFile)
         return true;
     }
     long long TotalBytes = 0;
-    for (int i = 0; i < 256; i++)
+    for (int charIndex = 0; charIndex < 256; charIndex++)
     {
-        TotalBytes += CharFrequency[i];
+        TotalBytes += CharFrequency[charIndex];
     }
     if (TotalBytes == 0)
     {
@@ -289,21 +302,22 @@ bool DecompressFile(const char *InputFile, const char *OutputFile)
     Node *current = TreeRoot;
     long long BytesWritten = 0;
     int BytesRead;
-    while (BytesWritten < TotalBytes && (BytesRead = fread(buffer, 1, BufferSize, input)) > 0)
+    while (BytesWritten < TotalBytes)
     {
-        for (int i = 0; i < BytesRead && BytesWritten < TotalBytes; i++)
+        BytesRead = fread(buffer, 1, BufferSize, input);
+        if (BytesRead <= 0)
+            break;
+
+        for (int bufferIndex = 0; bufferIndex < BytesRead && BytesWritten < TotalBytes; bufferIndex++)
         {
-            unsigned char InputByte = buffer[i];
+            unsigned char InputByte = buffer[bufferIndex];
+            /*////////////// Got Help From AI Within The Next Section \\\\\\\\\\\\\\*/
             for (int bit = 7; bit >= 0 && BytesWritten < TotalBytes; bit--)
             {
-                if (InputByte & (1 << bit))
-                {
+                if ((InputByte >> bit) & 1)
                     current = current->right;
-                }
                 else
-                {
                     current = current->left;
-                }
 
                 if (current->left == nullptr && current->right == nullptr)
                 {
@@ -312,6 +326,7 @@ bool DecompressFile(const char *InputFile, const char *OutputFile)
                     current = TreeRoot;
                 }
             }
+            /*////////////// End of Assistance \\\\\\\\\\\\\\*/
         }
         processed += BytesRead;
         ShowProgress(processed, FileSize, StartTime);
@@ -336,15 +351,15 @@ void ShowHelp()
     cout << "  app.exe -b 8192           Change buffer size to 8192 bytes" << endl;
     cout << "You can combine options like this:" << endl;
     cout << "  app.exe -b 16384 -c photo.png              Compress with 16KB buffer" << endl;
+    cout << "Note: The default buffer size is 4KB." << endl;
 }
 
 string GetDecompressedFilename(const char *CompressedFile)
 {
-    string filename = string(CompressedFile);
-    if (filename.length() > 8 && filename.substr(filename.length() - 8) == ".ece2103")
-    {
-        return filename.substr(0, filename.length() - 8);
-    }
+    string filename = CompressedFile;
+    int len = filename.length();
+    if (len > 8 && filename.substr(len - 8) == ".ece2103")
+        return filename.substr(0, len - 8);
     return filename + ".decompressed";
 }
 
@@ -370,14 +385,11 @@ long long GetFileSize(const char *filename)
 void ShowProgress(long long processed, long long total, time_t StartTime)
 {
     int percent = (processed * 100) / total;
-    time_t CurrentTime = time(nullptr);
-    double elapsed = difftime(CurrentTime, StartTime);
+    time_t elapsed = time(nullptr) - StartTime;
 
     if (elapsed > 0 && processed > 0)
     {
-        double rate = processed / elapsed;
-        long long remaining = total - processed;
-        int eta = (int)(remaining / rate);
+        int eta = (int)((total - processed) * elapsed / processed);
         int hours = eta / 3600;
         int minutes = (eta % 3600) / 60;
         int seconds = eta % 60;
@@ -396,37 +408,30 @@ int main(int argc, char *argv[])
         ShowHelp();
         return 0;
     }
+
     bool compress = false, decompress = false;
     string InputFile = "";
+
     for (int i = 1; i < argc; i++)
     {
-        string arg = argv[i];
-        if (arg == "-c")
+        if (string(argv[i]) == "-c" && i + 1 < argc)
         {
             compress = true;
-            if (i + 1 < argc)
-            {
-                InputFile = argv[++i];
-            }
+            InputFile = argv[++i];
         }
-        else if (arg == "-d")
+        else if (string(argv[i]) == "-d" && i + 1 < argc)
         {
             decompress = true;
-            if (i + 1 < argc)
-            {
-                InputFile = argv[++i];
-            }
+            InputFile = argv[++i];
         }
-        else if (arg == "-b")
+        else if (string(argv[i]) == "-b" && i + 1 < argc)
         {
-            if (i + 1 < argc)
-            {
-                BufferSize = atoi(argv[++i]);
-                if (BufferSize <= 0)
-                    BufferSize = 4096;
-            }
+            BufferSize = atoi(argv[++i]);
+            if (BufferSize <= 0)
+                BufferSize = 4096;
         }
     }
+
     if (compress && !InputFile.empty())
     {
         string OutputFile = InputFile + ".ece2103";
@@ -449,5 +454,6 @@ int main(int argc, char *argv[])
     {
         ShowHelp();
     }
+
     return 0;
 }
