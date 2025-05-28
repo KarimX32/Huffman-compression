@@ -71,9 +71,9 @@ bool CountFrequencies(const char *filename)
     FILE *file = fopen(filename, "rb");
     if (!file)
         return false;
-    for (int charIndex = 0; charIndex < 256; charIndex++)
+    for (int i = 0; i < 256; i++)
     {
-        CharFrequency[charIndex] = 0;
+        CharFrequency[i] = 0;
     }
     unsigned char *buffer = new unsigned char[BufferSize];
     int BytesRead;
@@ -92,11 +92,11 @@ bool CountFrequencies(const char *filename)
 Node *BuildHuffmanTree()
 {
     FreqList SortedList;
-    for (int charIndex = 0; charIndex < 256; charIndex++)
+    for (int i = 0; i < 256; i++)
     {
-        if (CharFrequency[charIndex] > 0)
+        if (CharFrequency[i] > 0)
         {
-            SortedList.Insert(new Node(charIndex, CharFrequency[charIndex]));
+            SortedList.Insert(new Node(i, CharFrequency[i]));
         }
     }
     if (!SortedList.head)
@@ -150,9 +150,9 @@ bool CompressFile(const char *InputFile, const char *OutputFile)
     TreeRoot = BuildHuffmanTree();
     if (!TreeRoot)
         return false;
-    for (int charIndex = 0; charIndex < 256; charIndex++)
+    for (int i = 0; i < 256; i++)
     {
-        HuffmanCodes[charIndex] = "";
+        HuffmanCodes[i] = "";
     }
     GenerateCodes(TreeRoot, "");
     FILE *input = fopen(InputFile, "rb");
@@ -169,12 +169,12 @@ bool CompressFile(const char *InputFile, const char *OutputFile)
     /*////////////// Got Help From AI Within The Next Section \\\\\\\\\\\\\\*/
     fwrite(CharFrequency, sizeof(long long), 256, output);
 
-    for (int charIndex = 0; charIndex < 256; charIndex++)
+    for (int i = 0; i < 256; i++)
     {
-        int len = HuffmanCodes[charIndex].length();
+        int len = HuffmanCodes[i].length();
         fwrite(&len, sizeof(int), 1, output);
         if (len > 0)
-            fwrite(HuffmanCodes[charIndex].c_str(), 1, len, output);
+            fwrite(HuffmanCodes[i].c_str(), 1, len, output);
     }
     /*////////////// End of Assistance \\\\\\\\\\\\\\*/
 
@@ -237,16 +237,16 @@ bool DecompressFile(const char *InputFile, const char *OutputFile)
             fclose(output);
         return false;
     }
-    for (int charIndex = 0; charIndex < 256; charIndex++)
+    for (int i = 0; i < 256; i++)
     {
-        if (fread(&CharFrequency[charIndex], sizeof(long long), 1, input) != 1)
+        if (fread(&CharFrequency[i], sizeof(long long), 1, input) != 1)
         {
             fclose(input);
             fclose(output);
             return false;
         }
     }
-    for (int charIndex = 0; charIndex < 256; charIndex++)
+    for (int i = 0; i < 256; i++)
     {
         int CodeLength;
         if (fread(&CodeLength, sizeof(int), 1, input) != 1)
@@ -271,11 +271,11 @@ bool DecompressFile(const char *InputFile, const char *OutputFile)
                 return false;
             }
             CodeString[CodeLength] = '\0';
-            HuffmanCodes[charIndex] = CodeString;
+            HuffmanCodes[i] = CodeString;
         }
         else
         {
-            HuffmanCodes[charIndex] = "";
+            HuffmanCodes[i] = "";
         }
     }
     TreeRoot = BuildHuffmanTree();
@@ -286,9 +286,9 @@ bool DecompressFile(const char *InputFile, const char *OutputFile)
         return true;
     }
     long long TotalBytes = 0;
-    for (int charIndex = 0; charIndex < 256; charIndex++)
+    for (int i = 0; i < 256; i++)
     {
-        TotalBytes += CharFrequency[charIndex];
+        TotalBytes += CharFrequency[i];
     }
     if (TotalBytes == 0)
     {
