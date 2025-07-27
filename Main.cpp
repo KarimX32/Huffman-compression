@@ -196,11 +196,11 @@ bool CompressFile(const char *InputFile, const char *OutputFile)
             {
                 unsigned char byte = 0;
                 for (int j = 0; j < 8; j++)
-                {
-                    if (BitBuffer[j] == '1')
-                        byte += (128 >> j);
+                {                              
+                    if (BitBuffer[j] == '1')  
+                        byte += (128 >> j);   
                 }
-                fwrite(&byte, 1, 1, output);
+                fwrite(&byte, 1, 1, output);       
                 BitBuffer = BitBuffer.substr(8);
             }
             /*////////////// End of Assistance \\\\\\\\\\\\\\*/
@@ -208,7 +208,7 @@ bool CompressFile(const char *InputFile, const char *OutputFile)
         processed += BytesRead;
         ShowProgress(processed, FileSize, StartTime);
     }
-    if (!BitBuffer.empty())
+    if (!BitBuffer.empty())   
     {
         unsigned char byte = 0;
         for (int j = 0; j < BitBuffer.length(); j++)
@@ -315,7 +315,7 @@ bool DecompressFile(const char *InputFile, const char *OutputFile)
             /*////////////// Got Help From AI Within The Next Section \\\\\\\\\\\\\\*/
             for (int bit = 7; bit >= 0 && BytesWritten < TotalBytes; bit--)
             {
-                if ((InputByte >> bit) & 1)
+                if ((InputByte >> bit) & 1) 
                     current = current->right;
                 else
                     current = current->left;
