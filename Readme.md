@@ -4,8 +4,8 @@ A fast and efficient file compression utility implementing the Huffman coding al
 
 ## Authors
 
-- **Moamen Eslam** - 231004641
-- **Karim Amr** - 231004157
+- **Moamen Eslam** 
+- **Karim Amr**
 
 ## Features
 
@@ -155,8 +155,7 @@ This project is created for educational purposes as part of the ECE2103 course.
 ## Contact
 
 For questions or issues, please contact:
-- Moamen Eslam - 231004641
-- Karim Amr - 231004157
+- Moamen Eslam 
 
 ---
 
